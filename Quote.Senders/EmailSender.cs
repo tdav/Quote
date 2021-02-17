@@ -7,22 +7,30 @@ using Quote.Utils;
 using System.Net.Mail;
 using System.Threading.Tasks;
 using Quote.Senders.ViewModels;
+using QuoteServer.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Quote.Senders
 {
     public class EmailSender : ISender
     {
         private readonly IConfiguration conf;
+        private readonly ILogger<EmailSender> logger;
 
-        public EmailSender(IConfiguration _conf)
+        public EmailSender(IConfiguration _conf, ILogger<EmailSender> _logger)
         {
             conf = _conf;
+            logger = _logger;
         }
 
+        public string Name => "email";
 
         public async Task<bool> SendAsync(object value)
         {
             viEmailModel email = value as viEmailModel;
+
+            logger.LogInformation($"Send EMAIL to {email.ToEmail}");
+            return await ValueTask.FromResult(true);
 
             var fromEmail = conf["EmailSender:SMTPAccount"];
             var smtpServer = conf["EmailSender:SMTPServer"];

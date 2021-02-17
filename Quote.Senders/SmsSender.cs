@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Quote.Senders.ViewModels;
+using QuoteServer.Extensions;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -7,19 +9,27 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Quote.Senders
-{   
+{
     public class SmsSender : ISender
     {
         private readonly IConfiguration conf;
+        private readonly ILogger<SmsSender> logger;
 
-        public SmsSender(IConfiguration configuration)
+        public SmsSender(IConfiguration configuration, ILogger<SmsSender> _logger)
         {
             conf = configuration;
+            logger = _logger;
         }
+
+        public string Name => "sms";
 
         public async Task<bool> SendAsync(object value)
         {
-            SmsModel sm = value as SmsModel; 
+            SmsModel sm = value as SmsModel;
+
+            logger.LogInformation($"Send SMS to {sm.tel}");
+            return await ValueTask.FromResult(true);
+
 
             using (var client = new HttpClient())
             {

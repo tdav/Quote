@@ -12,12 +12,16 @@ namespace QuoteServer.Extensions
     public static class MyDbContextService
     {
         public static void AddMyDbContext(this IServiceCollection services, IConfiguration conf)
-        {    
+        {
             services
-                .AddDbContext<MyDbContext>(opt => opt.UseInMemoryDatabase("database_name")) 
-                .AddUnitOfWork<MyDbContext>();
+                 .AddDbContext<MyDbContext>(opt => opt.UseSqlite(conf.GetConnectionString("DefaultConnection"),
+                                            ass => ass.MigrationsAssembly(typeof(MyDbContext).Assembly.FullName)))
+                 .AddUnitOfWork<MyDbContext>();
+        
 
             services.AddCustomRepository<tbUser, UserService>();
+            services.AddCustomRepository<tbQuote, QuoteService>();
+             
         }
 
 

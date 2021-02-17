@@ -31,9 +31,9 @@ namespace QuoteServer.v1.Controllers
         public async Task<IActionResult> AuthenticateAsync([FromBody] viAuthenticateModel model)
         {
             var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
-            if (string.IsNullOrEmpty( model.Login ) && string.IsNullOrEmpty(model.Password) && string.IsNullOrEmpty(model.DrugStoreId))
+            if (string.IsNullOrEmpty( model.Email ) && string.IsNullOrEmpty(model.Password))
             {
-                logger.LogInformation($"Login Empty User:{model.Login} Passw:{model.Password} Ip:{remoteIpAddress}");
+                logger.LogInformation($"Login Empty User:{model.Email} Passw:{model.Password} Ip:{remoteIpAddress}");
                 return BadRequest(new { message = "Username or password is incorrect" });
             }
 
@@ -42,12 +42,40 @@ namespace QuoteServer.v1.Controllers
 
             if (user == null)
             {
-                logger.LogInformation($"Login BadRequest User:{model.Login} Passw:{model.Password} Ip:{remoteIpAddress}");
+                logger.LogInformation($"Login BadRequest User:{model.Email} Passw:{model.Password} Ip:{remoteIpAddress}");
                 return BadRequest(new { message = "Username or password is incorrect" });
             }
             else
             {
-                logger.LogInformation($"Login Ok User:{model.Login} Ip:{remoteIpAddress}");
+                logger.LogInformation($"Login Ok User:{model.Email} Ip:{remoteIpAddress}");
+            }
+
+            return Ok(user);
+        }
+
+
+        [HttpPost("register")]
+        [SwaggerOperation("Register")]
+        public async Task<IActionResult> UserRegisterAsync([FromBody] viUserRegister model)
+        {
+            var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;
+            if (string.IsNullOrEmpty(model.Email) && string.IsNullOrEmpty(model.Password))
+            {
+                logger.LogInformation($"Login Empty User:{model.Email} Passw:{model.Password} Ip:{remoteIpAddress}");
+                return BadRequest(new { message = "Username or password is incorrect" });
+            }
+
+            var rpUser = db.GetRepository<tbUser>(true) as UserService;
+            var user = await rpUser.CreateUserAsync(model);
+
+            if (user == null)
+            {
+                logger.LogInformation($"Login BadRequest User:{model.Email} Passw:{model.Password} Ip:{remoteIpAddress}");
+                return BadRequest(new { message = "Username or password is incorrect" });
+            }
+            else
+            {
+                logger.LogInformation($"Login Ok User:{model.Email} Ip:{remoteIpAddress}");
             }
 
             return Ok(user);

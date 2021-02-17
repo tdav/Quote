@@ -11,10 +11,6 @@ namespace Quote.Database.Models
     public class tbSubscribe : BaseModel
     {
         public int Id { get; set; }
-
-        [StringLength(500)]
-        public string Text { get; set; }
-
         public int SubscribeUserId { get; set; }
         public virtual tbUser SubscribeUser { get; set; }
         public int SenderId { get; set; }

@@ -11,10 +11,7 @@ using System.Threading.Tasks;
 
 namespace QuoteServer.Extensions.Controllers
 {
-    [Authorize]
-    [ApiController]
-    [ApiVersion("1.0")]
-    [Route("api/[controller]")]
+   
     public class BaseController<T> : ControllerBase where T : class, IBaseModel
     {
         private readonly IUnitOfWork uow;
@@ -86,6 +83,15 @@ namespace QuoteServer.Extensions.Controllers
         {
             var _storage = uow.GetRepository<T>();
             _storage.Update(value);
+            await uow.SaveChangesAsync();
+            return Ok();
+        }
+        
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var _storage = uow.GetRepository<T>();
+            _storage.Delete(id);
             await uow.SaveChangesAsync();
             return Ok();
         }

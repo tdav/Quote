@@ -10,10 +10,7 @@ using System.Threading.Tasks;
 
 namespace QuoteServer.Extensions.Controllers
 {
-    [Authorize]
-    [ApiController]
-    [ApiVersion("1.0")]
-    [Route("v{version:apiVersion}/[controller]")]
+   
     public class BaseControllerV2<T> : ControllerBase where T : class, IBaseModel
     {
         private readonly IUnitOfWork uow;

@@ -1,50 +1,88 @@
-﻿using Arch.EntityFrameworkCore.UnitOfWork;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Quote.Database.Models;
+using Quote.Database;
 using Quote.Senders;
-using Quote.Utils;
-using System.Security.Claims;
+using Quote.Senders.ViewModels;
+using QuoteServer.Extensions;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Quote.Repository
 {
     public interface ISerderService
     {
-        public Task<bool> SendAsync(string mes);
+        public Task<bool> SendAsync();
     }
 
     public class SerderService : ISerderService
     {
-        private readonly IUnitOfWork db;
-        private readonly IHttpContextAccessor accessor;
-        private readonly IServiceScopeFactory scopeFactory;
+        private readonly IServiceScopeFactory service;
 
-        public SerderService(IUnitOfWork _db, IHttpContextAccessor _accessor)
+        public SerderService(IServiceScopeFactory _service)
         {
-            db = _db;
-            accessor = _accessor;
+            service = _service;
         }
 
-        public async Task<bool> SendAsync(string mes)
+        public async Task<bool> SendAsync()
         {
-            var user_id = accessor.HttpContext.User.FindFirst(ClaimTypes.Sid);
-            
-            var rp = db.GetRepository<tbSubscribe>();
-            var sb = await rp.GetFirstOrDefaultAsync(predicate: x => x.SubscribeUserId == user_id.Value.ToInt());
-
-            using (var scope = scopeFactory.CreateScope())
+            using (var scope = service.CreateScope())
             {
-                ISender sender;
 
-                if (sb.SenderId == 1)
-                    sender = scope.ServiceProvider.GetRequiredService<EmailSender>();
-                else
-                    sender = scope.ServiceProvider.GetRequiredService<SmsSender>();
+                var db = (MyDbContext)scope.ServiceProvider.GetRequiredService(typeof(MyDbContext));
+                var sbList = await db.tbSubscribes
+                                        .Include(i=>i.SubscribeUser)
+                                        .Include(i=>i.Sender)
+                                        .Where(x => x.SubscribeUser.Status == 1).ToListAsync();
+
+                if (sbList.Count == 0) return true;
 
 
-                return true;
+                var email = scope.ServiceProvider.GetServiceByName<ISender>("email");
+                var sms = scope.ServiceProvider.GetServiceByName<ISender>("sms");
+
+
+                var quote = await db.tbQuotes.AsNoTracking().OrderByDescending(o => o.CreateDate).FirstOrDefaultAsync(w => w.Status == 1);
+
+                /*  
+                                IUnitOfWork db = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                                var rp = db.GetRepository<tbSubscribe>();
+                                var sbList = await rp.GetAllAsync(predicate: x => x.SubscribeUser.Status == 1);
+
+                                if (sbList.Count == 0) return true;
+
+                                var email = scope.ServiceProvider.GetRequiredService(typeof(EmailSender)) as EmailSender;  
+                                var sms = scope.ServiceProvider.GetRequiredService(typeof(SmsSender)) as SmsSender;  
+
+                                var qrp = db.GetRepository<tbQuote>();
+                                var quList = qrp.GetAll(predicate: w => w.Status == 1, orderBy: x => x.OrderBy(o => o.CreateDate), disableTracking: true);
+                                var quote = await quList.FirstOrDefaultAsync();
+                                */
+
+                foreach (var it in sbList)
+                {
+                    if (it.SenderId == 1)
+                    {
+                        var em = new viEmailModel();
+                        em.Body = quote.Text;
+                        em.Subject = "Quote of the Day";
+                        em.ToEmail = it.SubscribeUser.Email;
+                        await email.SendAsync(em);
+                    }
+                    else
+                    {
+                        var sm = new SmsModel();
+                        sm.mes = quote.Text;
+                        sm.mes_id = Guid.NewGuid().ToString();
+                        sm.tel = it.SubscribeUser.Phone;
+                        await sms.SendAsync(sm);
+                    }
+
+                    //var sender = scope.ServiceProvider.GetServiceByName<ISender>(it.Sender.Name);
+                    //await sender.SendAsync(mes);
+                }
             }
-        } 
+            return true;
+        }
     }
 }

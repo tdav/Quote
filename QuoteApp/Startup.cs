@@ -2,16 +2,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting; 
+using Microsoft.Extensions.Hosting;
 using QuoteServer.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Serilog;
-using Serilog.AspNetCore; 
+using Serilog.AspNetCore;
 using QuoteServer.BackgroundQueue;
-using Quote.Senders; 
+using System;
 
 namespace QuoteServer
 {
@@ -45,15 +43,25 @@ namespace QuoteServer
             });
 
             services.AddMyDbContext(Configuration);
-
-            services.AddMyService();
+           
+            services.AddMyService(Configuration);
              
 
             services.AddControllers()
                     .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 
-            services.AddHostedService<MyBackgroundWorker>()
-                    .AddSingleton<IBackgroundQueue<string>, BackgroundQueue<string>>();
+            services.AddCronJob<MessageSenderCronJob>(c =>
+            {
+                c.TimeZoneInfo = TimeZoneInfo.Local;
+                //c.CronExpression = "0 0 12 * *";    //Fire at 12pm (noon) every day
+                c.CronExpression = "*/1 * * * *";    //Fire at 12pm (noon) every day
+            });
+
+            services.AddCronJob<DeleteQouteCronJob>(c =>
+            {
+                c.TimeZoneInfo = TimeZoneInfo.Local;
+                c.CronExpression = @"*/5 * * * *";  //Fire every 5 minutes
+            });
 
             services.AddMemoryCache();
             services.AddMyAuthentication(Configuration);

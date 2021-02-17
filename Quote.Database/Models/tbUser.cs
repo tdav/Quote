@@ -1,6 +1,7 @@
 using Quote.Global;
 using System;
 using System.ComponentModel.DataAnnotations;
+using Toolbelt.ComponentModel.DataAnnotations.Schema.V5;
 
 namespace Quote.Database.Models
 {
@@ -34,19 +35,17 @@ namespace Quote.Database.Models
         [StringLength(100)]
         public string Patronymic { get; set; }
 
+
+        [IndexColumn(IsUnique =true)]
         [StringLength(100)]
         public string Email { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string Login { get; set; }
 
         [Required]
         [StringLength(200)]
         public string Password { get; set; }
 
         [Required]
-        public Guid RoleId { get; set; }
+        public int RoleId { get; set; }
         public spRole Role { get; set; }
 
         /// <summary>

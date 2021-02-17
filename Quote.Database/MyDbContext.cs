@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Quote.Database.Extensions;
 using Quote.Database.Models;
 using Quote.Global;
 using Quote.Utils;
@@ -10,29 +9,38 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Toolbelt.ComponentModel.DataAnnotations;
 
 namespace Quote.Database
 {
     public partial class MyDbContext : DbContext
     {
-        private readonly IHttpContextAccessor accessor; 
+        private readonly IHttpContextAccessor accessor;
 
-        public MyDbContext(DbContextOptions<MyDbContext> options, IHttpContextAccessor _accessor) : base(options)
+        public MyDbContext(DbContextOptions options, IHttpContextAccessor _accessor) : base(options)
         {
             accessor = _accessor;
-
             this.ChangeTracker.LazyLoadingEnabled = false;
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        {
+            if (!options.IsConfigured)
+            {
+                options.UseSqlite("Data Source=sqlitedemo.db");
+            }
         }
 
         #region Declare
 
-      
+        public DbSet<spAccessList> spAccessLists { get; set; }
+        public DbSet<spCategory> spCategories { get; set; }
         public DbSet<spRole> spRoles { get; set; }
-       
-       
+        public DbSet<spSender> spSenders { get; set; }
+        public DbSet<tbAuthor> tbAuthors { get; set; }
+        public DbSet<tbQuote> tbQuotes { get; set; }
+        public DbSet<tbSubscribe> tbSubscribes { get; set; }
         public DbSet<tbUser> tbUsers { get; set; }
-
-
 
         #endregion
 
@@ -42,19 +50,16 @@ namespace Quote.Database
             AuditEvent();
             return base.SaveChanges(acceptAllChangesOnSuccess);
         }
-
         public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
         {
             AuditEvent();
             return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
-
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             AuditEvent();
             return base.SaveChangesAsync(cancellationToken);
         }
-
         public override int SaveChanges()
         {
             AuditEvent();
@@ -64,7 +69,11 @@ namespace Quote.Database
         public int GetId()
         {
             var user = accessor.HttpContext.User.FindFirst(ClaimTypes.Sid);
-            return user.Value.ToInt();
+            
+            if (user == null)
+                return 1;  //Это когда новый пользователи
+            else
+                return user.Value.ToInt();
         }
 
         private void AuditEvent()
@@ -105,7 +114,8 @@ namespace Quote.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // modelBuilder.BuildIndexesFromAnnotations();
+            modelBuilder.Seed();
+            modelBuilder.BuildIndexesFromAnnotations();
 
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
