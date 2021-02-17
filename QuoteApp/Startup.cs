@@ -97,8 +97,9 @@ namespace QuoteServer
 
             app.UseSerilogRequestLogging();
             app.UseMySwagger(provider);
-            app.UpdateMigrateDatabase();
             app.UseMyMetricServer();
+
+            app.UpdateMigrateDatabase();
         }
     }
 }
