@@ -11,7 +11,7 @@ namespace QuoteServer.Extensions
             services.AddSingleton<ISender, EmailSender>();
             services.AddSingleton<ISender, SmsSender>();
 
-            services.AddSingleton<ISerderService, SerderService>();
+            services.AddScoped<ISerderService, SerderService>();
         }
     }
 }

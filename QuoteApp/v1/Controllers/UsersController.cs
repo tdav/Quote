@@ -3,17 +3,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
-using QuoteServer.Core;
 using System.Threading.Tasks;
 using Quote.Database.Models;
+using Quote.Repository;
+using Quote.Repository.ViewModels;
 
 namespace QuoteServer.v1.Controllers
 {
-
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/[controller]")]
-    [SwaggerTag("Фойдаланувчилар")]
+    [SwaggerTag("Users")]
     public class UsersController : ControllerBase
     {
         private readonly IUnitOfWork db;
@@ -27,7 +27,7 @@ namespace QuoteServer.v1.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        [SwaggerOperation("Авторизация")]
+        [SwaggerOperation("Login")]
         public async Task<IActionResult> AuthenticateAsync([FromBody] viAuthenticateModel model)
         {
             var remoteIpAddress = Request.HttpContext.Connection.RemoteIpAddress;

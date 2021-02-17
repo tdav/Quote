@@ -9,7 +9,7 @@ namespace Quote.Database.Models
     /// </summary>
     /// 
 
-    public partial class spAccessList : BaseModel
+    public partial class spAccessList : BaseModel 
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]

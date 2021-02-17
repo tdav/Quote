@@ -41,9 +41,10 @@ namespace Quote.Repository
                     sender = scope.ServiceProvider.GetRequiredService<EmailSender>();
                 else
                     sender = scope.ServiceProvider.GetRequiredService<SmsSender>();
-                
 
-            return true;
+
+                return true;
+            }
         } 
     }
 }

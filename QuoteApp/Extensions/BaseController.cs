@@ -1,4 +1,5 @@
 ﻿using Arch.EntityFrameworkCore.UnitOfWork;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Quote.Database.Models;
@@ -10,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace QuoteServer.Extensions.Controllers
 {
+    [Authorize]
+    [ApiController]
+    [ApiVersion("1.0")]
     [Route("api/[controller]")]
     public class BaseController<T> : ControllerBase where T : class, IBaseModel
     {

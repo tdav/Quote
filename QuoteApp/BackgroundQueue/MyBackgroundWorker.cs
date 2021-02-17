@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Threading;
-using System.Threading.Tasks;  
+using System.Threading.Tasks;
 using System;
-using Quote.Database;
+using Quote.Repository;
 
 namespace QuoteServer.BackgroundQueue
 {
@@ -11,11 +11,13 @@ namespace QuoteServer.BackgroundQueue
     {
         private readonly IBackgroundQueue<string> queueMes;
         private readonly IServiceScopeFactory scopeFactory;
+        private readonly ISerderService sender;
 
-        public MyBackgroundWorker(IBackgroundQueue<string> _queueMes, IServiceScopeFactory _scopeFactory)
+        public MyBackgroundWorker(IBackgroundQueue<string> _queueMes, IServiceScopeFactory _scopeFactory, ISerderService _serder)
         {
             scopeFactory = _scopeFactory;
             queueMes = _queueMes;
+            sender = _serder;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,13 +36,9 @@ namespace QuoteServer.BackgroundQueue
             {
                 try
                 {
-                    using (var scope = scopeFactory.CreateScope())
+                    foreach (var it in queueMes.GetAll())
                     {
-                        var ctx = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-
-                        foreach (var it in queueMes.GetAll())
-                    {
-                        await emailSenderService.SendEmailAsync(it);
+                        await sender.SendAsync(it);
                     }
 
                     await Task.Delay(1000, stoppingToken);

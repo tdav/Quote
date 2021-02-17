@@ -2,7 +2,7 @@
 
 namespace Quote.Global
 {
-    public class BaseModel
+    public class BaseModel: IBaseModel
     {
         public int Status { get; set; }
         public DateTime CreateDate { get; set; }
